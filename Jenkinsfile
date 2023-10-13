@@ -44,37 +44,29 @@ pipeline {
 
         stage('Docker build') {
             steps {
-                script{
-                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
-                        
+                script{                        
                         sh "docker build -t shopping-cart -f docker/Dockerfile ."
                         sh "docker tag shopping-cart Saish69/shopping-cart:latest"
-                       // sh "docker push Saish69/shopping-cart:latest"
-                    }
+                       
             }
         }
     }
 
-     stage('Docker push') {
+     stage('Docker login and push') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'dockerpwd', usernameVariable: 'dockerusr')]) {
+                sh "docker login -u ${env.dockerusr} -p ${env.dockerpwd}"
+                }
+                sh "docker push saish69/shopping-cart:latest"
+            }
+        }
+
+    stage('Docker deploy') {
             steps {
                 script{
-                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
-
-                        sh "docker push Saish40/shopping-cart:latest"
-                    }
+                        sh "docker run -d -p 8070:8070 Saish69/shopping-cart:latest"
             }
         }
     }
-
-    // stage('Docker deploy') {
-    //         steps {
-    //             script{
-    //                 withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
-
-    //                     sh "docker run -d -p 8070:8070 Saish40/shopping-cart:latest"
-    //                 }
-    //         }
-    //     }
-    // }
 }
 }
